@@ -1,33 +1,24 @@
 import pytest
-from implementation import fizzbuzz
+from implementation import is_palindrome
 
-def test_fizzbuzz_multiplo_de_3():
-    assert fizzbuzz(3) == 'Fizz'
-    assert fizzbuzz(6) == 'Fizz'
-    assert fizzbuzz(9) == 'Fizz'
+def test_palindrome_normal_cases():
+    assert is_palindrome("A man a plan a canal Panama") == True
+    assert is_palindrome("Madam Im Adam") == True
+    assert is_palindrome("Racecar") == True
+    assert is_palindrome("No lemon no melon") == True
 
-def test_fizzbuzz_multiplo_de_5():
-    assert fizzbuzz(5) == 'Buzz'
-    assert fizzbuzz(10) == 'Buzz'
-    assert fizzbuzz(20) == 'Buzz'
+def test_palindrome_edge_cases():
+    assert is_palindrome("") == True  # Empty string is a palindrome
+    assert is_palindrome(" ") == True  # Single space is a palindrome
+    assert is_palindrome("  ") == True  # Multiple spaces are a palindrome
 
-def test_fizzbuzz_multiplo_de_15():
-    assert fizzbuzz(15) == 'FizzBuzz'
-    assert fizzbuzz(30) == 'FizzBuzz'
-    assert fizzbuzz(45) == 'FizzBuzz'
+def test_palindrome_non_palindrome_cases():
+    assert is_palindrome("Hello World") == False
+    assert is_palindrome("Python") == False
+    assert is_palindrome("This is not a palindrome") == False
 
-def test_fizzbuzz_nao_multiplo_de_3_ou_5():
-    assert fizzbuzz(1) == '1'
-    assert fizzbuzz(2) == '2'
-    assert fizzbuzz(4) == '4'
-    assert fizzbuzz(7) == '7'
-    assert fizzbuzz(8) == '8'
-
-def test_fizzbuzz_zero():
-    assert fizzbuzz(0) == 'FizzBuzz'
-
-def test_fizzbuzz_negativos():
-    assert fizzbuzz(-3) == 'Fizz'
-    assert fizzbuzz(-5) == 'Buzz'
-    assert fizzbuzz(-15) == 'FizzBuzz'
-    assert fizzbuzz(-1) == '-1'
+def test_palindrome_special_characters():
+    assert is_palindrome("A man, a plan, a canal, Panama!") == True
+    assert is_palindrome("Was it a car or a cat I saw?") == True
+    assert is_palindrome("No 'x' in Nixon") == True
+    assert is_palindrome("Not a palindrome!") == False
