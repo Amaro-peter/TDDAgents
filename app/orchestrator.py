@@ -1,14 +1,14 @@
 import os
 import time
 import logging
-from typing import TypedDict
+from typing import TypedDict, Optional
 from langgraph.graph import StateGraph, END, START
 from app.agents.tester import generate_tests
 from app.agents.developer import generate_code
 from app.agents.runner import run_pytest
 from app.agents.reviewer import analyze_failures
 from app.config import Config
-from app.redis_state import RedisState
+from app.persistence import PersistenceStrategy, PersistenceFactory
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -22,8 +22,19 @@ class AgentState(TypedDict):
     test_phase: str  # 'red' or 'green'
 
 class TDDOrchestrator:
-    def __init__(self, task_key: str = "tdd_task"):
-        self.redis = RedisState()
+    def __init__(
+        self, 
+        task_key: str = "tdd_task",
+        persistence: Optional[PersistenceStrategy] = None
+    ):
+        """
+        Initialize TDD Orchestrator with dependency injection.
+        
+        Args:
+            task_key: Key for storing state in persistence layer
+            persistence: Persistence strategy to use. If None, creates default Redis persistence.
+        """
+        self.persistence = persistence or PersistenceFactory.create_persistence("redis")
         self.state_key = f"state:{task_key}"
         self.graph = self._build_graph()
         os.makedirs(Config.WORKSPACE_PATH, exist_ok=True)
@@ -262,7 +273,7 @@ class TDDOrchestrator:
         logging.info("📖 Fluxo TDD: RED (falha) → GREEN (passa) → REFACTOR (melhora)")
         
         # Load or initialize state
-        saved_state = self.redis.load(self.state_key)
+        saved_state = self.persistence.load(self.state_key)
         
         initial_state: AgentState = {
             "specification": specification,
@@ -284,7 +295,7 @@ class TDDOrchestrator:
                 if final_state:
                     node_name = list(state.keys())[0]
                     current_state = state[node_name]
-                    self.redis.save(self.state_key, current_state)
+                    self.persistence.save(self.state_key, current_state)
             
             # Update state
             if final_state:
