@@ -29,5 +29,5 @@ if __name__ == "__main__":
     )
     
     # ESCOLHA QUALQUER ESPECIFICAÇÃO AQUI:
-    orchestrator.run(spec_fizzbuzz)
+    orchestrator.run(spec_palindrome)
 
