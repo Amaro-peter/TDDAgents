@@ -20,6 +20,7 @@ class AgentState(TypedDict):
     status: str
     iteration: int
     test_phase: str  # 'red' or 'green'
+    previous_tests: str  # Guardar testes anteriores para regeneração de testes
 
 class TDDOrchestrator:
     def __init__(
@@ -28,11 +29,11 @@ class TDDOrchestrator:
         persistence: Optional[PersistenceStrategy] = None
     ):
         """
-        Initialize TDD Orchestrator with dependency injection.
+        Inicializar o orquestrador TDD através de uma injeção de dependência.
         
         Args:
-            task_key: Key for storing state in persistence layer
-            persistence: Persistence strategy to use. If None, creates default Redis persistence.
+            task_key: Chave para armazenar o estado na camada de persistência.
+            persistence: Estratégia de persistência a ser usada. Se None, cria persistência Redis padrão.
         """
         self.persistence = persistence or PersistenceFactory.create_persistence("redis")
         self.state_key = f"state:{task_key}"
@@ -41,15 +42,23 @@ class TDDOrchestrator:
 
     def _build_graph(self):
         def create_tests(state: AgentState) -> AgentState:
+            iteration = state.get("iteration", 1)
             logging.info("=" * 60)
-            logging.info("📝 FASE 1 (TDD): Gerando testes")
+            if iteration == 1:
+                logging.info("📝 FASE 1 (TDD): Gerando testes")
+            else:
+                logging.info(f"📝 REGENERANDO TESTES (iteração {iteration})")
             logging.info("=" * 60)
+            
+            # Guardar testes anteriores antes de gerar novos
+            previous_tests = state.get("tests", "")
+            feedback = state.get("feedback", "")
             
             tests = generate_tests(state["specification"])
             
-            # Validação rigorosa
-            if not tests or len(tests.strip()) < 50:
-                logging.error("❌ Testes inválidos ou muito curtos")
+            # Validação
+            if not tests:
+                logging.error("❌ Testes vazios gerados")
                 raise ValueError("Falha ao gerar testes válidos")
             
             # Verificar se contém imports corretos
@@ -82,12 +91,13 @@ class TDDOrchestrator:
             logging.info(f"📄 Preview:\n{tests[:400]}...")
             
             # Marcar que estamos na fase RED (sem implementação ainda)
-            return {"tests": tests, "test_phase": "red", "code": ""}
+            return {"tests": tests, "test_phase": "red", "code": "", "previous_tests": previous_tests}
 
         def execute_tests_red(state: AgentState) -> AgentState:
             """Executa testes na fase RED - DEVE falhar pois não há implementação"""
+            iteration = state.get("iteration", 1)
             logging.info("=" * 60)
-            logging.info("🔴 FASE 2 (TDD - RED): Executando testes SEM implementação")
+            logging.info(f"🔴 FASE 2 (TDD - RED): Executando testes SEM implementação (iteração {iteration})")
             logging.info("=" * 60)
             logging.info("⚠️  Esperado: testes devem FALHAR (não há código ainda)")
             
@@ -114,7 +124,9 @@ class TDDOrchestrator:
                 logging.error("⚠️  PROBLEMA: Testes passaram sem implementação!")
                 logging.error("⚠️  Isso indica que os testes podem estar incorretos.")
                 logging.error("=" * 60)
-                return {"status": "invalid_tests", "feedback": "Testes passam sem implementação", "test_phase": "red"}
+                # Analisar por que os testes passaram sem código.
+                feedback = analyze_failures(output + "\n\nAVISO: Testes passaram sem implementação. Os testes podem não estar validando corretamente a funcionalidade.")
+                return {"status": "invalid_tests", "feedback": feedback, "test_phase": "red"}
 
         def create_code(state: AgentState) -> AgentState:
             iteration = state.get("iteration", 1)
@@ -132,8 +144,8 @@ class TDDOrchestrator:
             code = generate_code(tests, feedback, prev_code)
             
             # Validação
-            if not code or len(code.strip()) < 20:
-                logging.error("❌ Código inválido ou muito curto")
+            if not code:
+                logging.error("❌ Código vazio gerado")
                 raise ValueError("Falha ao gerar código válido")
             
             # Verificar se não contém testes
@@ -195,14 +207,22 @@ class TDDOrchestrator:
         def route_after_red(state: AgentState) -> str:
             """Decide o próximo passo após fase RED"""
             status = state.get("status")
+            iteration = state.get("iteration", 0)
+            
+            # Verificar limite de iterações
+            if iteration >= Config.MAX_ITERATIONS:
+                logging.error("=" * 60)
+                logging.error("⚠️ ⚠️ ⚠️ LIMITE DE ITERAÇÕES ATINGIDO ⚠️ ⚠️ ⚠️")
+                logging.error("=" * 60)
+                return "end"
             
             if status == "red_confirmed":
                 # RED confirmado, pode gerar código
                 return "generate_code"
             elif status == "invalid_tests":
-                # Testes inválidos (passaram sem código)
-                logging.error("Testes inválidos detectados. Encerrando.")
-                return "end"
+                # Testes inválidos (passaram sem código) - regenerate tests
+                logging.warning(f"⚠️ Testes inválidos detectados. Regenerando testes... (iteração {iteration + 1}/{Config.MAX_ITERATIONS})")
+                return "regenerate_tests"
             else:
                 return "end"
 
@@ -223,7 +243,7 @@ class TDDOrchestrator:
             # Precisa refatorar
             return "refactor"
 
-        # Build graph
+        # Construir o grafo de estados
         workflow = StateGraph(AgentState)
         
         # Adicionar nós
@@ -231,6 +251,7 @@ class TDDOrchestrator:
         workflow.add_node("run_red_phase", execute_tests_red)
         workflow.add_node("generate_code", create_code)
         workflow.add_node("run_green_phase", execute_tests_green)
+        workflow.add_node("regenerate_tests", create_tests)  # Reuse create_tests for regeneration
         
         # Fluxo TDD: Tests → RED → Code → GREEN → (REFACTOR se falhar)
         workflow.add_edge(START, "create_tests")
@@ -248,9 +269,13 @@ class TDDOrchestrator:
             route_after_red,
             {
                 "generate_code": "generate_code",
+                "regenerate_tests": "regenerate_tests",
                 "end": END
             }
         )
+        
+        # Depois de regenerar os testes, executar a fase RED novamente.
+        workflow.add_edge("regenerate_tests", "run_red_phase")
         
         workflow.add_edge("generate_code", "run_green_phase")
         
@@ -272,7 +297,7 @@ class TDDOrchestrator:
         logging.info(f"📋 Especificação:\n{specification}\n")
         logging.info("📖 Fluxo TDD: RED (falha) → GREEN (passa) → REFACTOR (melhora)")
         
-        # Load or initialize state
+        # Carregar ou inicializar estado.
         saved_state = self.persistence.load(self.state_key)
         
         initial_state: AgentState = {
@@ -282,13 +307,14 @@ class TDDOrchestrator:
             "feedback": saved_state.get("feedback", ""),
             "status": saved_state.get("status", ""),
             "iteration": 0,
-            "test_phase": "red"
+            "test_phase": "red",
+            "previous_tests": ""
         }
         
         for i in range(Config.MAX_ITERATIONS):
             initial_state["iteration"] = i + 1
             
-            # Execute graph
+            # Executar o grafo
             final_state = None
             for state in self.graph.stream(initial_state):
                 final_state = state
@@ -297,7 +323,7 @@ class TDDOrchestrator:
                     current_state = state[node_name]
                     self.persistence.save(self.state_key, current_state)
             
-            # Update state
+            # Atualizar o estado
             if final_state:
                 node_name = list(final_state.keys())[0]
                 initial_state.update(final_state[node_name])
@@ -321,7 +347,7 @@ class TDDOrchestrator:
             logging.info("🎉 Ciclo TDD concluído com sucesso!")
             logging.info("   ✓ RED: Testes falharam inicialmente")
             logging.info("   ✓ GREEN: Implementação passou todos os testes")
-            logging.info("   ✓ REFACTOR: Código refinado (se necessário)")
+            logging.info("   ✓ REFACTOR: Código refinado (apenas se necessário)")
         
         logging.info("=" * 60)
         
