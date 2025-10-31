@@ -18,9 +18,19 @@ def extract_code(text: str) -> str:
     
     return text.strip()
 
-def generate_tests(specification: str) -> str:
+def generate_tests(specification: str, feedback: str = "", previous_tests: str = "") -> str:
     llm = ChatOpenAI(model=Config.MODEL, temperature=0.2)
     module_name = Config.IMPLEMENTATION_MODULE
+    
+    context_parts = []
+    
+    if feedback:
+        context_parts.append(f"📋 Feedback sobre os testes anteriores:\n{feedback}\n")
+    
+    if previous_tests:
+        context_parts.append(f"❌ Testes anteriores que precisam ser corrigidos:\n```python\n{previous_tests}\n```\n")
+    
+    context = "\n".join(context_parts) if context_parts else ""
     
     messages = [
         SystemMessage(content=(
@@ -35,6 +45,8 @@ def generate_tests(specification: str) -> str:
             "\n6. Use assertions claras e descritivas"
             "\n7. Cubra casos normais, edge cases e casos de erro"
             "\n8. Agrupe testes relacionados em funções separadas com nomes descritivos"
+            "\n9. Se houver feedback, corrija os problemas apontados"
+            "\n10. Os testes DEVEM falhar quando não houver implementação - evite testes triviais que sempre passam"
             "\n\nFormato esperado:"
             "\nimport pytest"
             f"\nfrom {module_name} import <função_ou_classe>"
@@ -44,10 +56,12 @@ def generate_tests(specification: str) -> str:
             "\n    assert ..."
         )),
         HumanMessage(content=(
-            f"Especificação:\n{specification}\n\n"
+            f"{context}"
+            f"📝 Especificação:\n{specification}\n\n"
             "Crie testes unitários completos em pytest que validem esta especificação. "
             "Lembre-se: escreva APENAS os testes, a implementação virá depois. "
-            f"Os testes devem importar de '{module_name}' (ex: from {module_name} import fizzbuzz)."
+            f"Os testes devem importar de '{module_name}' (ex: from {module_name} import fizzbuzz). "
+            "IMPORTANTE: Os testes devem falhar se não houver implementação correta."
         ))
     ]
     response = llm.invoke(messages)
@@ -56,7 +70,7 @@ def generate_tests(specification: str) -> str:
     # Validação adicional: garantir que não há implementação
     if has_implementation(code):
         logging.warning("⚠️ Testes contêm implementação, regenerando...")
-        return generate_tests(specification)
+        return generate_tests(specification, feedback, previous_tests)
     
     # Validação: garantir que importa do módulo correto
     if f"from {module_name} import" not in code and f"import {module_name}" not in code:
