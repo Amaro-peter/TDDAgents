@@ -1,6 +1,6 @@
 import redis
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from app.persistence.abstract_persistence import PersistenceStrategy
 from app.config import Config
 
@@ -60,6 +60,20 @@ class RedisPersistence(PersistenceStrategy):
             self.client.flushdb()
         except redis.RedisError as e:
             raise ConnectionError(f"Failed to clear Redis: {str(e)}")
+    
+    def list_tasks(self) -> List[str]:
+        """
+        List all saved TDD task keys.
+        
+        Returns:
+            List of task keys (without 'state:' prefix)
+        """
+        try:
+            keys = self.client.keys("state:*")
+            # Remove 'state:' prefix from keys
+            return [key.replace("state:", "") for key in keys]
+        except redis.RedisError as e:
+            raise ConnectionError(f"Failed to list tasks from Redis: {str(e)}")
     
     def get_client(self) -> redis.Redis:
         """Get the underlying Redis client for advanced operations."""

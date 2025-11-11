@@ -28,6 +28,53 @@ class PersistenceStrategy(ABC):
     def clear_all(self) -> None:
         """Clear all data from the persistence layer."""
         pass
+    
+    # High-level methods for TDD workflow state management
+    def save_state(self, task_key: str, state: Dict[str, Any]) -> None:
+        """
+        Save TDD workflow state.
+        
+        Args:
+            task_key: Unique identifier for the task
+            state: Complete state dictionary
+        """
+        key = f"state:{task_key}"
+        self.save(key, state)
+    
+    def load_state(self, task_key: str) -> Optional[Dict[str, Any]]:
+        """
+        Load TDD workflow state.
+        
+        Args:
+            task_key: Unique identifier for the task
+            
+        Returns:
+            State dictionary or None if not found
+        """
+        key = f"state:{task_key}"
+        if not self.exists(key):
+            return None
+        return self.load(key)
+    
+    def delete_state(self, task_key: str) -> None:
+        """
+        Delete TDD workflow state.
+        
+        Args:
+            task_key: Unique identifier for the task
+        """
+        key = f"state:{task_key}"
+        self.delete(key)
+    
+    def list_tasks(self) -> List[str]:
+        """
+        List all saved task keys.
+        
+        Returns:
+            List of task keys
+        """
+        # This method should be implemented by concrete classes
+        raise NotImplementedError("list_tasks must be implemented by concrete persistence classes")
 
 
 class VectorPersistenceStrategy(ABC):
