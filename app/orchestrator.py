@@ -124,18 +124,18 @@ class TDDOrchestrator:
             total = len(state.get("plan", []))
             tests_code = state.get("tests_code", "")
             feedback = state.get("feedback", "")
-            function_name = state.get("function_name", "process")  # ⚠️ NOVO
+            function_name = state.get("function_name", "process")
             
             logging.info("=" * 70)
             logging.info(f"🧪 FASE 2: TESTER - Sub-requisito [{plan_idx + 1}/{total}]")
             logging.info(f"📝 '{sub_req}'")
-            logging.info(f"🎯 Função: {function_name}")  # ⚠️ NOVO
+            logging.info(f"🎯 Função: {function_name}")
             logging.info(f"📊 Testes existentes: {len([l for l in tests_code.split('\\n') if 'def test_' in l])} funções")
             logging.info("=" * 70)
             
             new_tests_code = generate_test_for_sub_req(
                 sub_requirement=sub_req,
-                function_name=function_name,  # ⚠️ NOVO
+                function_name=function_name,
                 all_tests_code=tests_code,
                 feedback=feedback
             )
@@ -162,7 +162,6 @@ class TDDOrchestrator:
             iteration = state.get("iteration", 0)
             max_retries = state.get("max_retries", self.max_retries)
             
-            # ⚠️ NOVO: Contador específico para tentativas no RED
             red_attempts = state.get("red_attempts", 0)
             
             logging.info("=" * 70)
@@ -177,7 +176,7 @@ class TDDOrchestrator:
             has_failures = "failed" in output.lower() or "error" in output.lower()
             
             if has_failures:
-                logging.info("✅ RED confirmado! O novo teste falha como esperado.")
+                logging.info("✅ 🔴 RED confirmado! O novo teste falha como esperado.")
                 feedback = analyze_failures(
                     test_output=output,
                     specification=state["specification"],
@@ -273,12 +272,12 @@ class TDDOrchestrator:
             iteration = state.get("iteration", 0) + 1
             plan_idx = state.get("plan_index", 0)
             total = len(state.get("plan", []))
-            function_name = state.get("function_name", "process")  # ⚠️ NOVO
+            function_name = state.get("function_name", "process")
             
             logging.info("=" * 70)
             logging.info(f"💻 FASE 4: DEVELOPER - [{plan_idx + 1}/{total}] Iteração {iteration}")
             logging.info(f"🎯 Implementando: '{sub_req}'")
-            logging.info(f"🎯 Função: {function_name}")  # ⚠️ NOVO
+            logging.info(f"🎯 Função: {function_name}")
             logging.info(f"📦 Código anterior: {len(state.get('implementation_code', '').split('\\n'))} linhas")
             logging.info("=" * 70)
             
@@ -288,7 +287,7 @@ class TDDOrchestrator:
             
             new_code = generate_code_incremental(
                 test_code=tests_code,
-                function_name=function_name,  # ⚠️ NOVO
+                function_name=function_name,
                 feedback=feedback,
                 previous_code=previous_code
             )
@@ -297,7 +296,7 @@ class TDDOrchestrator:
             with open(impl_path, "w", encoding="utf-8") as f:
                 f.write(new_code)
             
-            logging.info(f"✅ Código atualizado: {len(new_code.split('\\n'))} linhas")
+            ##logging.info(f"✅ Código atualizado: {len(new_code.split('\\n'))} linhas")
             
             new_state = {
                 **state,
@@ -369,7 +368,7 @@ class TDDOrchestrator:
                     )
 
                     logging.info("=" * 70)
-                    logging.info("🔍 FEEDBACK PARA REVISÃO DE TESTES:")
+                    logging.info("🔍 FEEDBACK DA REVISÃO DOS TESTES:")
                     logging.info("=" * 70)
                     for line in test_review_feedback.split('\n'):
                         logging.info(line)
@@ -419,7 +418,7 @@ class TDDOrchestrator:
                     )
 
                     logging.info("=" * 70)
-                    logging.info("🔍 FEEDBACK ESTRUTURADO DO REVIEWER:")
+                    logging.info("🔍 FEEDBACK ESTRUTURADO DO REVIEWER SOBRE O CÓDIGO:")
                     logging.info("=" * 70)
                     for line in feedback.split('\n'):
                         logging.info(line)
@@ -431,9 +430,9 @@ class TDDOrchestrator:
             return new_state
 
 
-        def execute_reviewer(state: AgentState) -> AgentState:
+        def execute_progress_evaluator(state: AgentState) -> AgentState:
             logging.info("=" * 70)
-            logging.info("♻️  FASE 6: REVIEWER - Avaliando progresso")
+            logging.info("♻️  FASE 6: PROGRESS EVALUATOR - Verificando progresso atual do plano TDD")
             logging.info("=" * 70)
             
             current_index = state["plan_index"]
@@ -506,8 +505,8 @@ class TDDOrchestrator:
             status = state.get("status")
             
             if status == "green_passed":
-                logging.info("🔀 Rota: RUNNER_GREEN → REVIEWER (testes passaram!)")
-                return "execute_reviewer"
+                logging.info("🔀 Rota: RUNNER_GREEN → PROGRESS_EVALUATOR (testes passaram!)")
+                return "execute_progress_evaluator"
             elif status == "test_review_needed":
                 logging.info("🔀 Rota: RUNNER_GREEN → TESTER (revisar testes)")
                 return "execute_tester"
@@ -521,17 +520,17 @@ class TDDOrchestrator:
                 logging.error(f"🔀 Rota: RUNNER_GREEN → END (status: {status})")
                 return END
 
-        def route_after_reviewer(state: AgentState) -> str:
+        def route_after_progress_evaluator(state: AgentState) -> str:
             status = state.get("status")
             
             if status == "next_req":
-                logging.info("🔀 Rota: REVIEWER → TESTER (próximo sub-requisito)")
+                logging.info("🔀 Rota: PROGRESS_EVALUATOR → TESTER (próximo sub-requisito)")
                 return "execute_tester"
             elif status == "plan_complete":
-                logging.info("🔀 Rota: REVIEWER → END (plano completo!)")
+                logging.info("🔀 Rota: PROGRESS_EVALUATOR → END (plano completo!)")
                 return END
             else:
-                logging.error(f"🔀 Rota: REVIEWER → END (status: {status})")
+                logging.error(f"🔀 Rota: PROGRESS_EVALUATOR → END (status: {status})")
                 return END
 
         # ==================== CONSTRUÇÃO DO GRAFO ====================
@@ -543,7 +542,7 @@ class TDDOrchestrator:
         workflow.add_node("execute_runner_red", execute_runner_red)
         workflow.add_node("execute_developer", execute_developer)
         workflow.add_node("execute_runner_green", execute_runner_green)
-        workflow.add_node("execute_reviewer", execute_reviewer)
+        workflow.add_node("execute_progress_evaluator", execute_progress_evaluator)
         
         workflow.add_edge(START, "plan_task")
         
@@ -552,7 +551,7 @@ class TDDOrchestrator:
         workflow.add_conditional_edges("execute_runner_red", route_after_red)
         workflow.add_conditional_edges("execute_developer", route_after_developer)
         workflow.add_conditional_edges("execute_runner_green", route_after_green)
-        workflow.add_conditional_edges("execute_reviewer", route_after_reviewer)
+        workflow.add_conditional_edges("execute_progress_evaluator", route_after_progress_evaluator)
         
         return workflow.compile()
 
@@ -568,7 +567,6 @@ class TDDOrchestrator:
         Returns:
             Estado final do workflow
         """
-        logging.info("🚀 " * 25)
         
         if resume:
             logging.info("🔄 RETOMANDO WORKFLOW TDD INCREMENTAL DO ESTADO SALVO")
@@ -599,7 +597,7 @@ class TDDOrchestrator:
             
             initial_state: AgentState = {
                 "specification": specification,
-                "function_name": function_name,  # ⚠️ NOVO
+                "function_name": function_name,
                 "plan": [],
                 "current_sub_req": "",
                 "tests_code": "",

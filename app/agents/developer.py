@@ -90,24 +90,24 @@ def generate_code_incremental(
     response = llm.invoke([system_msg, human_msg])
     raw_code = response.content.strip()
     
-    # ⚠️ NOVO: Log detalhado do que o LLM retornou
-    logging.info("=" * 70)
-    logging.info("🔍 RAW RESPONSE FROM DEVELOPER LLM:")
-    logging.info(f"Length: {len(raw_code)} chars")
-    logging.info(f"Lines: {len(raw_code.split(chr(10)))}")
-    logging.info(f"Content:\n{raw_code}")
-    logging.info("=" * 70)
+    
+    ##logging.info("=" * 70)
+    ##logging.info("🔍 RAW RESPONSE FROM DEVELOPER LLM:")
+    ##logging.info(f"Length: {len(raw_code)} chars")
+    ##logging.info(f"Lines: {len(raw_code.split(chr(10)))}")
+    ##logging.info(f"Content:\n{raw_code}")
+    ##logging.info("=" * 70)
     
     # Remove imports de teste
     clean_code = remove_test_imports(raw_code)
     
-    # ⚠️ NOVO: Log do código final
-    logging.info("=" * 70)
-    logging.info("🔍 FINAL CODE AFTER CLEANUP:")
-    logging.info(f"Length: {len(clean_code)} chars")
-    logging.info(f"Lines: {len(clean_code.split(chr(10)))}")
-    logging.info(f"Content:\n{clean_code}")
-    logging.info("=" * 70)
+   
+    ##logging.info("=" * 70)
+    ##logging.info("🔍 FINAL CODE AFTER CLEANUP:")
+    ##logging.info(f"Length: {len(clean_code)} chars")
+    ##logging.info(f"Lines: {len(clean_code.split(chr(10)))}")
+    ##logging.info(f"Content:\n{clean_code}")
+    ##logging.info("=" * 70)
     
     if not clean_code.strip():
         raise ValueError("Developer gerou código vazio")
