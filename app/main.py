@@ -21,8 +21,65 @@ if __name__ == "__main__":
         "5. Para entradas inválidas, retornar 'not a valid roman number.\n"
         "6. String vazia deve retornar 0.\n"
         "7. Desconsiderar maiúsculas ou minúsculas (converter tudo para uppercase).\n\n"
+
+    spec_is_prime = (
+        "Implemente a função is_prime que recebe um número inteiro n e retorna True se ele for um número primo, "
+        "ou False caso contrário.\n\n"
+        
+        "⚙️ DEFINIÇÃO:\n"
+        "Um número primo é aquele maior que 1 que possui exatamente dois divisores positivos distintos: "
+        "1 e ele mesmo. Exemplos: 2, 3, 5, 7, 11.\n\n"
+        
+        "⚠️ REQUISITOS:\n"
+        "1. O parâmetro n deve ser do tipo inteiro (int). Caso contrário, retornar 'invalid input'.\n"
+        "2. Se n for menor ou igual a 1, retornar False (números ≤ 1 não são primos por definição).\n"
+        "3. A verificação de divisores deve ser feita apenas até a raiz quadrada de n, "
+        "incluindo otimização para pular números pares após o 2.\n"
+        "4. A função deve retornar True se n for primo e False caso contrário.\n"
+        "5. A função deve lidar corretamente com números negativos e zero.\n\n"
+        
+        "💡 EXEMPLOS:\n"
+        ">>> is_prime(2)\n"
+        "True\n\n"
+        ">>> is_prime(9)\n"
+        "False\n\n"
+        ">>> is_prime(17)\n"
+        "True\n\n"
+        ">>> is_prime(1)\n"
+        "False\n\n"
+        ">>> is_prime('10')\n"
+        "'invalid input'\n"
     )
 
+    spec_sort_numbers = (
+        "Implemente a função sort_numbers que recebe uma lista de números inteiros e retorna uma nova lista "
+        "com os mesmos elementos em ordem crescente.\n\n"
+        
+        "⚙️ DEFINIÇÃO:\n"
+        "A ordenação deve ser feita de forma que o menor número apareça primeiro e o maior por último. "
+        "A função deve preservar todos os elementos originais, sem removê-los ou alterá-los, apenas reordenando.\n\n"
+        
+        "⚠️ REQUISITOS:\n"
+        "1. O parâmetro de entrada deve ser uma lista (list) contendo apenas valores inteiros (int).\n"
+        "   - Caso a entrada não seja uma lista, ou contenha elementos não inteiros, retornar 'invalid input'.\n"
+        "2. A função deve retornar uma **nova lista**, sem modificar a lista original (sem efeitos colaterais).\n"
+        "3. É permitido o uso de métodos ou funções internas de ordenação do Python (ex: sorted, list.sort).\n"
+        "4. Implementações manuais de ordenação (ex: bubble sort, insertion sort) também são aceitas, "
+        "desde que mantenham a complexidade esperada.\n"
+        "5. A função deve lidar corretamente com listas vazias (retornar []).\n"
+        "6. Números negativos devem ser ordenados corretamente antes dos positivos.\n\n"
+        
+        "💡 EXEMPLOS:\n"
+        ">>> sort_numbers([3, 1, 4, 1, 5, 9])\n"
+        "[1, 1, 3, 4, 5, 9]\n\n"
+        ">>> sort_numbers([-2, 0, 10, -5])\n"
+        "[-5, -2, 0, 10]\n\n"
+        ">>> sort_numbers([])\n"
+        "[]\n\n"
+        ">>> sort_numbers([3, 'a', 2])\n"
+        "'invalid input'\n"
+    )
+    
     spec_fizzbuzz = (
         "Implemente a função fizzbuzz que recebe um número inteiro positivo n "
         "e retorna uma lista de strings representando os números de 1 até n, aplicando as seguintes regras:\n\n"
