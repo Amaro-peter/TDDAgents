@@ -21,6 +21,7 @@ if __name__ == "__main__":
         "5. Para entradas inválidas, retornar 'not a valid roman number.\n"
         "6. String vazia deve retornar 0.\n"
         "7. Desconsiderar maiúsculas ou minúsculas (converter tudo para uppercase).\n\n"
+    )
 
     spec_is_prime = (
         "Implemente a função is_prime que recebe um número inteiro n e retorna True se ele for um número primo, "
