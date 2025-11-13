@@ -77,7 +77,7 @@ def analyze_failures(
         
     elif iteration == 1:
         feedback_mode = "CONTEXTUAL"
-        # ⚠️ LLM extrai contexto relevante (não heurística!)
+        # ⚠️ LLM extrai contexto relevante
         spec_context = extract_relevant_spec_context(
             specification=specification,
             sub_requirement=sub_requirement,

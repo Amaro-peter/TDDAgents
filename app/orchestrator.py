@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 
 class AgentState(TypedDict):
     specification: str
-    function_name: str  # ⚠️ NOVO: nome da função principal
+    function_name: str 
     plan: List[str]
     current_sub_req: str
     tests_code: str
