@@ -1,8 +1,8 @@
 import pytest
 from app_code import roman_to_int
 
-def test_single_roman_numerals():
-    # Testando a conversão de numerais romanos simples
+def test_single_numerals():
+    # Testando a conversão de numerais romanos simples para inteiros
     assert roman_to_int('I') == 1  # 'I' deve ser convertido para 1
     assert roman_to_int('V') == 5  # 'V' deve ser convertido para 5
     assert roman_to_int('X') == 10  # 'X' deve ser convertido para 10
@@ -11,8 +11,8 @@ def test_single_roman_numerals():
     assert roman_to_int('D') == 500  # 'D' deve ser convertido para 500
     assert roman_to_int('M') == 1000  # 'M' deve ser convertido para 1000
 
-def test_roman_numerals_with_subtraction():
-    # Testando a conversão de numerais romanos que utilizam subtração
+def test_subtractive_numerals():
+    # Testando a conversão de numerais romanos que utilizam a notação subtrativa
     assert roman_to_int('IV') == 4  # 'IV' deve ser convertido para 4 (5 - 1)
     assert roman_to_int('IX') == 9  # 'IX' deve ser convertido para 9 (10 - 1)
     assert roman_to_int('XL') == 40  # 'XL' deve ser convertido para 40 (50 - 10)
@@ -20,27 +20,41 @@ def test_roman_numerals_with_subtraction():
     assert roman_to_int('CD') == 400  # 'CD' deve ser convertido para 400 (500 - 100)
     assert roman_to_int('CM') == 900  # 'CM' deve ser convertido para 900 (1000 - 100)
 
-def test_complex_roman_numerals():
-    # Testando a conversão de numerais romanos complexos
+def test_multiple_numerals():
+    # Testando a conversão de numerais romanos com múltiplos símbolos
+    assert roman_to_int('III') == 3  # 'III' deve ser convertido para 3 (1 + 1 + 1)
+    assert roman_to_int('XXI') == 21  # 'XXI' deve ser convertido para 21 (10 + 10 + 1)
     assert roman_to_int('MCMXCIV') == 1994  # 'MCMXCIV' deve ser convertido para 1994 (1000 + 900 + 90 + 4)
 
+def test_invalid_symbols():
+    # Testando a entrada com símbolos não permitidos
+    assert roman_to_int('A') == 'WRONG'  # 'A' não é um numeral romano válido
+    assert roman_to_int('1') == 'WRONG'  # '1' não é um numeral romano válido
+    assert roman_to_int('@') == 'WRONG'  # '@' não é um numeral romano válido
+
+def test_excessive_repetitions():
+    # Testando entradas inválidas com repetições excessivas de numerais romanos
+    assert roman_to_int('IIII') == 'WRONG'  # 'IIII' não é um numeral romano válido (repetição excessiva)
+    assert roman_to_int('XXXX') == 'WRONG'  # 'XXXX' não é um numeral romano válido (repetição excessiva)
+    assert roman_to_int('CCCC') == 'WRONG'  # 'CCCC' não é um numeral romano válido (repetição excessiva)
+    assert roman_to_int('MMMM') == 'WRONG'  # 'MMMM' não é um numeral romano válido (repetição excessiva)
+
+def test_invalid_order_of_numerals():
+    # Testando entradas inválidas com ordem incorreta de numerais romanos
+    assert roman_to_int('IC') == 'WRONG'  # 'IC' não é uma ordem válida (deveria ser 'CI')
+    assert roman_to_int('IL') == 'WRONG'  # 'IL' não é uma ordem válida (deveria ser 'XL')
+    assert roman_to_int('VX') == 'WRONG'  # 'VX' não é uma ordem válida (deveria ser 'XV')
+
+def test_invalid_subtraction_case():
+    # Testando entradas inválidas com subtrações não permitidas
+    assert roman_to_int('IL') == 'WRONG'  # 'IL' não é uma subtração válida (deveria ser 'XL')
+    assert roman_to_int('IC') == 'WRONG'  # 'IC' não é uma subtração válida (deveria ser 'CI')
+
 def test_empty_input():
-    # Entrada vazia deve retornar 0, que é o valor padrão correto para conversão
-    assert roman_to_int('') == 0
+    # Entrada vazia deve retornar valor padrão correto
+    assert roman_to_int('') == 0  # A string vazia deve ser convertida para 0
 
-def test_invalid_roman_numerals():
-    # Testando a conversão de uma entrada inválida (não romano)
-    assert roman_to_int('ABC') == 0  # 'ABC' não é um numeral romano válido, deve retornar 0
-
-def test_repeated_invalid_symbols():
-    # Testando a conversão de símbolos romanos inválidos repetidos
-    assert roman_to_int('IIII') == 0  # 'IIII' não é um numeral romano válido, deve retornar 0
-
-def test_invalid_order_of_symbols():
-    # Testando a conversão de símbolos romanos em ordem inválida
-    assert roman_to_int('IL') == 0  # 'IL' não é uma representação válida, deve retornar 0
-
-def test_lowercase_roman_numerals():
+def test_lowercase_input():
     # Testando a conversão de numerais romanos em letras minúsculas
     assert roman_to_int('i') == 1  # 'i' deve ser convertido para 1
     assert roman_to_int('v') == 5  # 'v' deve ser convertido para 5

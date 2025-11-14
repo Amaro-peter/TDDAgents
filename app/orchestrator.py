@@ -6,7 +6,7 @@ from langgraph.graph import StateGraph, END, START
 from app.agents.planner import generate_plan
 from app.agents.tester import generate_test_for_sub_req
 from app.agents.developer import generate_code_incremental
-from app.agents.runner import run_pytest
+from app.agents.runner import run_pytest, get_test_coverage, get_mutation_score
 from app.agents.reviewer import analyze_failures
 from app.config import Config
 from app.persistence import PersistenceStrategy, PersistenceFactory
@@ -27,6 +27,8 @@ class AgentState(TypedDict):
     status: str
     max_retries: int
     red_attempts: int
+    coverage: Optional[float]
+    mutation_score: Optional[float]
 
 class TDDOrchestrator:
     def __init__(
@@ -462,7 +464,33 @@ class TDDOrchestrator:
                 logging.info(f"✅ Todos os {total} sub-requisitos foram implementados!")
                 logging.info("✅ Todos os testes passam cumulativamente!")
                 logging.info("=" * 70)
-                new_state = {**state, "status": "plan_complete"}
+
+                # === MÉTRICAS DE SCORE ===
+                logging.info("🔬 Executando métricas de avaliação final...")
+                
+                try:
+                    coverage = get_test_coverage()
+                except Exception as e:
+                    logging.error(f"Falha ao calcular cobertura: {e}")
+                    coverage = 0.0
+                
+                try:
+                    mutation_score = get_mutation_score()
+                except Exception as e:
+                    logging.error(f"Falha ao calcular mutação: {e}")
+                    mutation_score = 0.0
+                
+                logging.info(f"📊 MÉTRICA FINAL [Cobertura]: {coverage}%")
+                logging.info(f"🧬 MÉTRICA FINAL [Mutação]: {mutation_score}%")
+                logging.info("=" * 70)
+                # =======================================================
+
+                new_state = {
+                    **state, 
+                    "status": "plan_complete",
+                    "coverage": coverage, 
+                    "mutation_score": mutation_score
+                }
             
             self._save_state(new_state)
             return new_state
@@ -607,7 +635,9 @@ class TDDOrchestrator:
                 "plan_index": 0,
                 "status": "starting",
                 "max_retries": self.max_retries,
-                "red_attempts": 0 
+                "red_attempts": 0,
+                "coverage": None,
+                "mutation_score": None 
             }
         
         final_state = None

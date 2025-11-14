@@ -1,0 +1,4 @@
+[tool.mutmut]
+paths_to_mutate = "workspace/app_code.py"
+runner = "pytest"
+tests_dir = "workspace/"
